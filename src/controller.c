@@ -9,10 +9,10 @@
 
 #define BUFLEN 1024
 
-void control();
+void control(in_port_t ctrl_port);
 
-void control() {
-    int sockfd = init_socket(8020);
+void control(in_port_t ctrl_port) {
+    int sockfd = init_socket(ctrl_port);
     byte buffer[BUFLEN];
     struct search_packet s_packet;
     
@@ -51,7 +51,7 @@ void control() {
 }
 
 int main() {
-    control();
+    control(8020);
 
     return 0;
 }

@@ -53,9 +53,9 @@ void receive_forward(in_port_t port) {
 
             printf("dst: %s:%d\n", inet_ntoa(packet_in_addr), ntohs(temp_port));
 
-            uint16_t temp_msg_len;
-            memcpy(&temp_msg_len, buffer + offset, 2);
-            offset += 2;
+            uint32_t temp_msg_len;
+            memcpy(&temp_msg_len, buffer + offset, 4);
+            offset += 4;
 
             printf("msg-len: %d\n", temp_msg_len);
 
@@ -64,6 +64,7 @@ void receive_forward(in_port_t port) {
             offset += temp_msg_len;
 
             printf("msg: %s\n", temp_msg);
+            free(temp_msg);
         } else {
             /*Forward*/
             struct in_addr next_in_addr;
@@ -80,7 +81,7 @@ void receive_forward(in_port_t port) {
 }
 
 int main() {
-    receive_forward(8012);
+    receive_forward(8013);
 
     return 0;
 }

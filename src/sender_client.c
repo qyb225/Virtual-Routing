@@ -56,10 +56,10 @@ void client_send_msg(in_port_t src_port, const char *dest_addr_str,
     memcpy(ip_packet + offset, &packet_dest_port, 2);
     offset += 2;
 
-    /*data_len: 16bits, 2B*/
-    uint16_t packet_data_len = strlen(msg) + 1;
-    memcpy(ip_packet + offset, &packet_data_len, 2);
-    offset += 2;
+    /*data_len: 32bits, 4B*/
+    uint32_t packet_data_len = strlen(msg) + 1;
+    memcpy(ip_packet + offset, &packet_data_len, 4);
+    offset += 4;
 
     /*data: data_len * 8 bits, data_len B*/
     memcpy(ip_packet + offset, msg, packet_data_len);
@@ -89,9 +89,9 @@ void client_send_msg(in_port_t src_port, const char *dest_addr_str,
 
     // printf("dst: %s:%d\n", inet_ntoa(temp_in_addr), ntohs(temp_port));
 
-    // uint16_t temp_msg_len;
-    // memcpy(&temp_msg_len, ip_packet + offset, 2);
-    // offset += 2;
+    // uint32_t temp_msg_len;
+    // memcpy(&temp_msg_len, ip_packet + offset, 4);
+    // offset += 32;
 
     // printf("msg-len: %d\n", temp_msg_len);
 
@@ -154,7 +154,7 @@ void ask_controller(int sockfd, const char *controller_addr_str, in_port_t contr
 }
 
 int main() {
-    client_send_msg(8001, "127.0.0.1", 8012, "bla");
+    client_send_msg(8001, "127.0.0.1", 8013, "hello, v-router!");
 
     return 0;
 }

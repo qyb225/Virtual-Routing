@@ -45,7 +45,7 @@
 | src_port | 16bits |
 | dst_ip | 32bits |
 | dst_port | 16bits |
-| data_length | 16bits |
+| data_length | 32bits |
 | data | n bits (depend on msg_length) |
 | last host_ip | 32bits |
 | last host_port | 16bits |

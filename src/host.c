@@ -77,7 +77,9 @@ void receive_forward(in_port_t port) {
 }
 
 int main(int argc, char *argv[]) {
-    receive_forward(atoi(argv[0]));
+    int port = atoi(argv[1]);
+    printf("listen on port: %d\n", port);
+    receive_forward(port);
 
     return 0;
 }

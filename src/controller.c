@@ -25,22 +25,9 @@ void control(in_port_t ctrl_port) {
     while (count < 3) {
         data_len = recvfrom(sockfd, &s_packet, sizeof(struct search_packet),
                             0, (struct sockaddr *)&src_addr, &src_addr_len);
-
-        /*Main Algorithm...*/
-        /*----TEST----*/
         int path_len = 0;
-        uint32_t router_mid_addr;
-        inet_pton(AF_INET, "127.0.0.1", &router_mid_addr);
-        uint16_t router_mid_port = htons(8001);
-        memcpy(buffer + path_len, &router_mid_addr, 4);
-        path_len += 4;
-        memcpy(buffer + path_len, &router_mid_port, 2);
-        path_len += 2;
-        /*---END TEST---*/
-
-        // int path_len = 0;
-        // path_len = search_path_packet(topo, s_packet.src_ip_addr, s_packet.src_port, 
-        //                               s_packet.dest_ip_addr, s_packet.dest_port, buffer);
+        path_len = search_path_packet(topo, s_packet.src_ip_addr, s_packet.src_port, 
+                                      s_packet.dest_ip_addr, s_packet.dest_port, buffer);
 
         sendto(sockfd, &buffer, path_len, 0, (struct sockaddr *)&src_addr, src_addr_len);
         ++count;
@@ -75,8 +62,7 @@ int search_path_packet(struct Graph *topo, uint32_t src_ip_addr, uint16_t src_po
         }
     }
     dijkstra(topo, src, dest, path, &v_num);
-    
-    
+     
     return package(topo, path, v_num, path_packet);
 }
 
@@ -90,7 +76,7 @@ int package(struct Graph *topo, int *path, int path_len, byte *path_packet) {
         packet_len += 4;
 
         uint16_t router_mid_port = htons(topo->vertex_list[path[i]].val);
-        memcpy(path_packet + path_len, &router_mid_port, 2);
+        memcpy(path_packet + packet_len, &router_mid_port, 2);
         packet_len += 2;
 
         --i;

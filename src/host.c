@@ -6,11 +6,7 @@
 #include <string.h>
 #include "packet.h"
 #include "socket_utils.h"
-
-#define HOST_ADDR "127.0.0.1"
-#define BUFLEN 1024
-
-void receive_forward(in_port_t port);
+#include "host.h"
 
 void receive_forward(in_port_t port) {
     int sockfd = init_socket(port);
@@ -80,8 +76,8 @@ void receive_forward(in_port_t port) {
     }
 }
 
-int main() {
-    receive_forward(8013);
+int main(int argc, char *argv[]) {
+    receive_forward(atoi(argv[0]));
 
     return 0;
 }

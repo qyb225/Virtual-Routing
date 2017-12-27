@@ -6,20 +6,7 @@
 #include <string.h>
 #include "packet.h"
 #include "socket_utils.h"
-
-#define BUFLEN 1024
-#define HOST_ADDR "127.0.0.1"
-#define CTRL_ADDR "127.0.0.1"
-#define CTRL_PORT 8020
-
-/*API*/
-void client_send_msg(in_port_t src_port, const char *dest_addr_str, in_port_t dest_port, const char *msg);
-
-/*Utils*/
-void ask_controller(int sockfd, const char *controller_addr_str, in_port_t controller_port,
-                    const char *src_addr_str, in_port_t src_port,
-                    const char *dest_addr_str, in_port_t dest_port, 
-                    byte *path_buffer, int *path_data_len);
+#include "sender_client.h"
 
 void client_send_msg(in_port_t src_port, const char *dest_addr_str, 
                      in_port_t dest_port, const char *msg) {
@@ -69,40 +56,6 @@ void client_send_msg(in_port_t src_port, const char *dest_addr_str,
     memcpy(ip_packet + offset, path_buffer, path_data_len);
     offset += path_data_len;
 
-
-    // TEST:--------------------------------------------------------------
-    // offset = 0;
-    // struct in_addr temp_in_addr;
-    // uint16_t temp_port;
-
-    // memcpy(&(temp_in_addr.s_addr), ip_packet + offset, 4);
-    // offset += 4;
-    // memcpy(&temp_port, ip_packet + offset, 2);
-    // offset += 2;
-
-    // printf("src: %s:%d\n", inet_ntoa(temp_in_addr), ntohs(temp_port));
-
-    // memcpy(&(temp_in_addr.s_addr), ip_packet + offset, 4);
-    // offset += 4;
-    // memcpy(&temp_port, ip_packet + offset, 2);
-    // offset += 2;
-
-    // printf("dst: %s:%d\n", inet_ntoa(temp_in_addr), ntohs(temp_port));
-
-    // uint32_t temp_msg_len;
-    // memcpy(&temp_msg_len, ip_packet + offset, 4);
-    // offset += 32;
-
-    // printf("msg-len: %d\n", temp_msg_len);
-
-    // char *temp_msg = malloc(temp_msg_len);
-    // memcpy(temp_msg, ip_packet + offset, temp_msg_len);
-    // offset += temp_msg_len;
-
-    // printf("msg: %s\n", temp_msg);
-
-    // END TEST--------------------------------------------------------------
-    
     /*Send to next host*/
     struct in_addr next_in_addr;
     uint16_t next_port;
@@ -113,19 +66,6 @@ void client_send_msg(in_port_t src_port, const char *dest_addr_str,
     printf("next: %s:%d\n", inet_ntoa(next_in_addr), ntohs(next_port));
 
     send_data(sockfd, inet_ntoa(next_in_addr), ntohs(next_port), ip_packet, offset);
-    
-    
-    // struct in_addr path_in_addr;
-    // uint16_t path_port;
-    // int path_len = 0;
-
-    // while (path_len < path_data_len) {
-    //     memcpy(&(path_in_addr.s_addr), path_buffer + path_len, 4);
-    //     path_len += 4;
-    //     memcpy(&path_port, path_buffer + path_len, 2);
-    //     path_len += 2; 
-    //     printf("%s:%d\n", inet_ntoa(path_in_addr), ntohs(path_port));
-    // }
 }
 
 void ask_controller(int sockfd, const char *controller_addr_str, in_port_t controller_port,
@@ -154,7 +94,7 @@ void ask_controller(int sockfd, const char *controller_addr_str, in_port_t contr
 }
 
 int main() {
-    client_send_msg(8001, "127.0.0.1", 8013, "hello, v-router!");
+    client_send_msg(8000, "127.0.0.1", 8003, "hello, v-router!");
 
     return 0;
 }

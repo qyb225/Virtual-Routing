@@ -49,9 +49,6 @@ gcc sender_client.c socket_utils.c -o sender_client
 
 ---
 
-
----
-
 ## 流程
 
 **Step 1**: Sender_client 发送数据包到 Controller 请求路径。

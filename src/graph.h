@@ -24,10 +24,13 @@ struct Graph *create_graph(int n_vertex, int *init_val);
 /*添加 v1 和 v2 的无向边*/
 void add_edge(struct Graph *graph, int v1, int v2, int weight);
 
+/*v1 -> v2 最短路径，路径返回在 path 数组中，v_num 记录路径节点个数，函数返回路径长度*/
+int dijkstra(struct Graph *graph, int v1, int v2, int *path, int *v_num);
+
 /*销毁图*/
 void destroy_graph(struct Graph *graph);
 
-/*输出邻接表 (FOR DEBUGGING)*/
+/*输出邻接表 (FOR DEBUGGING )*/
 void display_graph(struct Graph *graph);
 
 #endif

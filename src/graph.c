@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "graph.h"
 
+#define MAX_NUM 1024
+
 struct Graph *create_graph(int n_vertex, int *init_val) {
     struct Graph *graph = malloc(sizeof(struct Graph));
     graph->vertex_num = n_vertex;
@@ -33,6 +35,48 @@ void add_edge(struct Graph *graph, int v1, int v2, int weight) {
     graph->vertex_list[v2].head = list_node_v1;
     
     graph->edge_num += 1;
+}
+
+int dijkstra(struct Graph *graph, int v1, int v2, int *path, int *v_num) {
+    /*存放更新到的最短距离*/
+    int *dis = malloc(graph->vertex_num * sizeof(int));
+    /*已经扩展的集合*/
+    int *exp_sets = malloc(graph->vertex_num * sizeof(int));
+
+    for (int i = 0; i < graph->vertex_num; ++i) {
+        dis[i] = MAX_NUM;
+        exp_sets[i] = 0;
+    }
+    exp_sets[v1] = 1; /*v1 被扩展*/
+    dis[v1] = 0;
+    int least_exp = v1;
+    int least_exp_dis = 0;
+    *v_num = 0;
+    while (!exp_sets[v2]) {
+        struct ListNode *successor = graph->vertex_list[least_exp].head;
+        int next_exp;
+        int next_min_dis = MAX_NUM;
+        while (successor) {
+            if (!exp_sets[successor->num]) {
+                if (least_exp_dis + successor->weight < dis[successor->num]) {
+                    dis[successor->num] = least_exp_dis + successor->weight;
+                }
+                if (dis[successor->num] < next_min_dis) {
+                    next_min_dis = dis[successor->num];
+                    next_exp = successor->num;
+                }
+            }      
+            successor = successor->next;
+        }
+        least_exp = next_exp;
+        least_exp_dis = dis[least_exp];
+        exp_sets[least_exp] = 1;
+        path[(*v_num)++] = least_exp;
+    }
+    free(dis);
+    free(exp_sets);
+    
+    return least_exp_dis;
 }
 
 void destroy_graph(struct Graph *graph) {

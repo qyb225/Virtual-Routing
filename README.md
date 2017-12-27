@@ -2,6 +2,56 @@
 
 中心化虚拟路由系统。
 
+仅在 Ubuntu 16.04 下测试，其它 Linux 应该也能跑，Windows 下因为 socket API 不一样无法运行。
+
+---
+
+**controller**: 计算路径返回给 sender_client，端口默认 8020。
+
+```
+gcc controller.c socket_utils.c graph.c -o controller
+```
+
+```
+./controller
+```
+
+---
+
+**host**: 接收 / 转发报文 (路由器功能)
+
+```
+gcc host.c socket_utils.c -o host
+```
+
+运行时开多个进程监听多个端口：
+
+```
+./host 8001
+./host 8002
+./host 8003
+```
+
+---
+
+**sender_client**: 发送数据到其它 host，端口默认 8000。
+
+
+```
+gcc sender_client.c socket_utils.c -o sender_client
+```
+
+
+```
+./sender_client
+```
+
+
+---
+
+
+---
+
 ## 流程
 
 **Step 1**: Sender_client 发送数据包到 Controller 请求路径。

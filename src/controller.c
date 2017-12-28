@@ -33,7 +33,7 @@ void control(in_port_t ctrl_port) {
         ++count;
     }
 
-    free(topo);
+    destroy_graph(topo);
 }
 
 struct Graph *init_controller() {

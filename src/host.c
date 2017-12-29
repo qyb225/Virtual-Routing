@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "packet.h"
 #include "socket_utils.h"
 #include "host.h"
 
@@ -18,62 +17,95 @@ void receive_forward(in_port_t port) {
 
     while (1) {
         data_len = recvfrom(sockfd, &buffer, BUFLEN, 0, 
-            (struct sockaddr *)&src_addr, &src_addr_len);
-        /*Confirm*/
-        struct in_addr dest_in_addr, this_in_addr;
-        uint16_t dest_port, this_port;
-
-        memcpy(&(dest_in_addr.s_addr), buffer + 6, 4);
-        memcpy(&dest_port, buffer + 10, 2);
-
+                            (struct sockaddr *)&src_addr, &src_addr_len);
+        struct in_addr this_in_addr;
+        uint16_t this_port;
         inet_pton(AF_INET, HOST_ADDR, &(this_in_addr.s_addr));
         this_port = htons(port);
 
-        if (this_in_addr.s_addr == dest_in_addr.s_addr && dest_port == this_port) {
-            int offset = 0;
-            struct in_addr packet_in_addr;
-            uint16_t temp_port;
+        int is_confirm = confirm_dest(buffer, this_in_addr.s_addr, this_port);
 
-            memcpy(&(packet_in_addr.s_addr), buffer + offset, 4);
-            offset += 4;
-            memcpy(&temp_port, buffer + offset, 2);
-            offset += 2;
+        if (is_confirm) {
+            uint32_t src_ip_addr, dest_ip_addr;
+            uint16_t src_port_ns, dest_port_ns;
+            int msg_len;
+            char *msg;
 
-            printf("get data packet!\n");
-            printf("src: %s:%d\n", inet_ntoa(packet_in_addr), ntohs(temp_port));
+            get_packet_data(buffer, &src_ip_addr, &src_port_ns,
+                            &dest_ip_addr, &dest_port_ns, &msg_len, &msg);
 
-            memcpy(&(packet_in_addr.s_addr), buffer + offset, 4);
-            offset += 4;
-            memcpy(&temp_port, buffer + offset, 2);
-            offset += 2;
-
-            printf("dst: %s:%d\n", inet_ntoa(packet_in_addr), ntohs(temp_port));
-
-            uint32_t temp_msg_len;
-            memcpy(&temp_msg_len, buffer + offset, 4);
-            offset += 4;
-
-            printf("msg-len: %d\n", temp_msg_len);
-
-            char *temp_msg = malloc(temp_msg_len);
-            memcpy(temp_msg, buffer + offset, temp_msg_len);
-            offset += temp_msg_len;
-
-            printf("msg: %s\n", temp_msg);
-            free(temp_msg);
+            display_data(src_ip_addr, src_port_ns, 
+                         dest_ip_addr, dest_port_ns, msg_len, msg);
+            free(msg);
         } else {
             /*Forward*/
             struct in_addr next_in_addr;
             uint16_t next_port;
-            data_len -= 6;
-            memcpy(&(next_in_addr.s_addr), buffer + data_len, 4);
-            memcpy(&next_port, buffer + data_len + 4, 2);
+
+            get_cut_next_path(buffer, &data_len, &(next_in_addr.s_addr), &next_port);
+            send_data(sockfd, inet_ntoa(next_in_addr), ntohs(next_port), buffer, data_len);
 
             printf("next: %s:%d\n", inet_ntoa(next_in_addr), ntohs(next_port));
-
-            send_data(sockfd, inet_ntoa(next_in_addr), ntohs(next_port), buffer, data_len);
         }  
     }
+}
+
+int confirm_dest(byte *packet, uint32_t host_ip_addr, uint16_t host_port_ns) {
+    uint32_t dest_ip_addr;
+    uint16_t dest_port_ns;
+
+    memcpy(&dest_ip_addr, packet + 6, 4);
+    memcpy(&dest_port_ns, packet + 10, 2);
+
+    return host_ip_addr == dest_ip_addr && host_port_ns == dest_port_ns;
+}
+
+void get_cut_next_path(byte *packet, int *data_len,
+                       uint32_t *next_ip_addr, uint16_t *next_port) {
+    *data_len -= 6;
+    int offset = *data_len;
+    memcpy(next_ip_addr, packet + offset, 4);
+    memcpy(next_port, packet + offset + 4, 2);
+}
+
+void get_packet_data(byte *packet, uint32_t *src_ip_addr_p, uint16_t *src_port_ns_p,
+                     uint32_t *dest_ip_addr_p, uint16_t *dest_port_ns_p, 
+                     int *msg_len_p, char **msg_p) {
+    int offset = 0;
+
+    memcpy(src_ip_addr_p, packet + offset, 4);
+    offset += 4;
+    memcpy(src_port_ns_p, packet + offset, 2);
+    offset += 2;
+
+    memcpy(dest_ip_addr_p, packet + offset, 4);
+    offset += 4;
+    memcpy(dest_port_ns_p, packet + offset, 2);
+    offset += 2;
+
+    memcpy(msg_len_p, packet + offset, 4);
+    offset += 4;
+
+    *msg_p = malloc(*msg_len_p);
+    memcpy(*msg_p, packet + offset, *msg_len_p);
+}
+
+void display_data(uint32_t src_ip_addr, uint16_t src_port_ns,
+                  uint32_t dest_ip_addr, uint16_t dest_port_ns,
+                  int msg_len, const char *msg) {
+    struct in_addr display_ip;
+    in_port_t display_port;
+
+    display_ip.s_addr = src_ip_addr;
+    display_port = ntohs(src_port_ns);
+    printf("src: %s:%d\n", inet_ntoa(display_ip), display_port);
+
+    display_ip.s_addr = dest_ip_addr;
+    display_port = ntohs(dest_port_ns);
+    printf("dst: %s:%d\n", inet_ntoa(display_ip), display_port);
+
+    printf("data-len: %d\n", msg_len);
+    printf("data: %s\n\n", msg);
 }
 
 int main(int argc, char *argv[]) {

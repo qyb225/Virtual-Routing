@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "packet.h"
 #include "socket_utils.h"
 
 typedef unsigned char byte;

@@ -23,6 +23,10 @@ void ask_controller(int sockfd, const char *controller_addr_str, in_port_t contr
                     byte *path_buffer, int *path_seg_len);
 
 /*Pack*/
+void set_ask_packet(const char *src_addr_str, in_port_t src_port,
+                    const char *dest_addr_str, in_port_t dest_port,
+                    byte *ask_packet);
+
 /*set src addr/port, dest addr/port 12B*/
 void set_addr_header(const char *src_addr_str, in_port_t src_port,
                      const char *dest_addr_str, in_port_t dest_port,

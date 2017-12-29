@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "packet.h"
 #include "socket_utils.h"
 #include "sender_client.h"
 
@@ -48,23 +47,42 @@ void ask_controller(int sockfd, const char *controller_addr_str, in_port_t contr
                     const char *dest_addr_str, in_port_t dest_port,
                     byte *path_buffer, int *path_seg_len) {
 
-    struct search_packet ask_packet;
+    byte ask_packet[12];
     
     /*Packet*/
-    inet_pton(AF_INET, src_addr_str, &(ask_packet.src_ip_addr));
-    ask_packet.src_port = htons(src_port);
-    inet_pton(AF_INET, src_addr_str, &(ask_packet.dest_ip_addr));
-    ask_packet.dest_port = htons(dest_port);
+    set_ask_packet(src_addr_str, src_port, dest_addr_str, dest_port, ask_packet);
 
     /*Ask for path*/
     send_data(sockfd, controller_addr_str, 
-              controller_port, &ask_packet, sizeof(ask_packet));
+              controller_port, ask_packet, 12);
     
     /*recv path_packet...*/
     struct sockaddr_in ctrl_addr;
     socklen_t ctrl_addr_len = 0;
     *path_seg_len = recvfrom(sockfd, path_buffer, BUFLEN, 0,
                      (struct sockaddr *)&ctrl_addr, &ctrl_addr_len);
+}
+
+void set_ask_packet(const char *src_addr_str, in_port_t src_port,
+                    const char *dest_addr_str, in_port_t dest_port,
+                    byte *ask_packet) {
+    uint32_t src_ip_addr, dest_ip_addr;
+    uint16_t src_port_ns, dest_port_ns;
+
+    int offset = 0;
+
+    inet_pton(AF_INET, src_addr_str, &src_ip_addr);
+    src_port_ns = htons(src_port);
+    memcpy(ask_packet + offset, &src_ip_addr, 4);
+    offset += 4;
+    memcpy(ask_packet + offset, &src_port_ns, 2);
+    offset += 2;
+
+    inet_pton(AF_INET, dest_addr_str, &dest_ip_addr);
+    dest_port_ns = htons(dest_port);
+    memcpy(ask_packet + offset, &dest_ip_addr, 4);
+    offset += 4;
+    memcpy(ask_packet + offset, &dest_port_ns, 2);
 }
 
 void set_addr_header(const char *src_addr_str, in_port_t src_port,

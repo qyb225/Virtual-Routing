@@ -4,14 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "packet.h"
 #include "socket_utils.h"
 #include "controller.h"
 
 void control(in_port_t ctrl_port) {
     int sockfd = init_socket(ctrl_port);
     byte buffer[BUFLEN];
-    struct search_packet s_packet;
+    byte s_packet[12];
 
     struct Graph *topo = init_controller();
     
@@ -23,11 +22,17 @@ void control(in_port_t ctrl_port) {
     
     int count = 0;
     while (count < 3) {
-        data_len = recvfrom(sockfd, &s_packet, sizeof(struct search_packet),
+        data_len = recvfrom(sockfd, &s_packet, sizeof(s_packet),
                             0, (struct sockaddr *)&src_addr, &src_addr_len);
         int path_len = 0;
-        path_len = search_path_packet(topo, s_packet.src_ip_addr, s_packet.src_port, 
-                                      s_packet.dest_ip_addr, s_packet.dest_port, buffer);
+        
+        uint32_t src_ip_addr, dest_ip_addr;
+        uint16_t src_port_ns, dest_port_ns;
+        analysis_ask_packet(s_packet, &src_ip_addr, &src_port_ns,
+                            &dest_ip_addr, &dest_port_ns);
+
+        path_len = search_path_packet(topo, src_ip_addr, src_port_ns, 
+                                      dest_ip_addr, dest_port_ns, buffer);
 
         sendto(sockfd, &buffer, path_len, 0, (struct sockaddr *)&src_addr, src_addr_len);
         ++count;
@@ -49,7 +54,7 @@ struct Graph *init_controller() {
 }
 
 int search_path_packet(struct Graph *topo, uint32_t src_ip_addr, uint16_t src_port, 
-                        uint32_t dest_ip_addr, uint16_t dest_port, byte *path_packet) {
+                       uint32_t dest_ip_addr, uint16_t dest_port, byte *path_packet) {
     int src, dest;
     int path[4];
     int v_num;
@@ -64,6 +69,21 @@ int search_path_packet(struct Graph *topo, uint32_t src_ip_addr, uint16_t src_po
     dijkstra(topo, src, dest, path, &v_num);
      
     return package(topo, path, v_num, path_packet);
+}
+
+void analysis_ask_packet(byte *s_packet, uint32_t *src_ip_addr_p, uint16_t *src_port_ns_p,
+                         uint32_t *dest_ip_addr_p, uint16_t *dest_port_ns_p) {
+    int offset = 0;
+    /*src*/
+    memcpy(src_ip_addr_p, s_packet + offset, 4);
+    offset += 4;
+    memcpy(src_port_ns_p, s_packet + offset, 2);
+    offset += 2;
+
+    /*dest*/
+    memcpy(dest_ip_addr_p, s_packet + offset, 4);
+    offset += 4;
+    memcpy(dest_port_ns_p, s_packet + offset, 2);
 }
 
 int package(struct Graph *topo, int *path, int path_len, byte *path_packet) {
